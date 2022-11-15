@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">PetsMobile</string>
+
+    <string name="shelter">Shelter</string>
+    <string name="lost">Lost</string>
+    <string name="found">Found</string>
+    <string name="pet_internal">Inner Screen</string>
+
+    <string name="adopt">Adopt</string>
 </resources>
