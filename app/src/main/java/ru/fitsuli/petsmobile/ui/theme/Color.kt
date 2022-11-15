@@ -1,4 +1,4 @@
-package com.example.petsmobile.ui.theme
+package ru.fitsuli.petsmobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
