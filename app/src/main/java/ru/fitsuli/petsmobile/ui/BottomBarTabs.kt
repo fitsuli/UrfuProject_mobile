@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.material.icons.rounded.NightShelter
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.ui.graphics.vector.ImageVector
 import ru.fitsuli.petsmobile.R
@@ -16,12 +17,6 @@ enum class BottomBarTabs(
     @StringRes val labelResId: Int,
     val icon: ImageVector
 ) {
-    SHELTER(
-        route = Destinations.SHELTER,
-        labelResId = R.string.shelter,
-        icon = Icons.Rounded.NightShelter
-    ),
-
     LOST(
         route = Destinations.LOST,
         labelResId = R.string.lost,
@@ -32,5 +27,17 @@ enum class BottomBarTabs(
         route = Destinations.FOUND,
         labelResId = R.string.found,
         icon = Icons.Rounded.NearMe
+    ),
+
+    SHELTER(
+        route = Destinations.SHELTER,
+        labelResId = R.string.shelter,
+        icon = Icons.Rounded.NightShelter
+    ),
+
+    PROFILE(
+        route = Destinations.PROFILE,
+        labelResId = R.string.profile,
+        icon = Icons.Rounded.Person
     )
 }

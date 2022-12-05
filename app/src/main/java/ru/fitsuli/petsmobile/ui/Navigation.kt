@@ -22,7 +22,9 @@ import androidx.navigation.compose.rememberNavController
 import ru.fitsuli.petsmobile.ui.screens.FoundScreen
 import ru.fitsuli.petsmobile.ui.screens.InnerShelterScreen
 import ru.fitsuli.petsmobile.ui.screens.LostScreen
+import ru.fitsuli.petsmobile.ui.screens.ProfileScreen
 import ru.fitsuli.petsmobile.ui.screens.ShelterScreen
+import ru.fitsuli.petsmobile.ui.screens.SignInScreen
 
 /**
  * Created by Dmitry Danilyuk at 16.11.2022
@@ -50,7 +52,7 @@ fun Navigation() {
     ) { paddingValues ->
 
         NavHost(
-            appState.navController, startDestination = BottomBarTabs.SHELTER.route,
+            appState.navController, startDestination = BottomBarTabs.LOST.route,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(BottomBarTabs.SHELTER.route) {
@@ -65,6 +67,15 @@ fun Navigation() {
             }
             composable(BottomBarTabs.FOUND.route) {
                 FoundScreen()
+            }
+            composable(BottomBarTabs.PROFILE.route) {
+                ProfileScreen(
+                    onNavigateToSignIn = { navController.navigate(Destinations.SIGN_IN) }
+                )
+            }
+
+            composable(Destinations.SIGN_IN) {
+                SignInScreen()
             }
             composable(Destinations.INNER_SHELTER) {
                 InnerShelterScreen()
