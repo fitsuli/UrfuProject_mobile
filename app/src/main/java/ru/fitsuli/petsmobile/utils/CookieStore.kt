@@ -44,7 +44,8 @@ class SaveReceivedCookiesInterceptor(private val context: Context) : Interceptor
         if (originalResponse.headers(setCookieHeader).isNotEmpty()) {
             val cookies = PreferenceManager
                 .getDefaultSharedPreferences(context)
-                .getStringSet(cookiesKey, hashSetOf()).orEmpty().toHashSet()
+                .getStringSet(cookiesKey, hashSetOf()).orEmpty()
+                .toMutableSet()
 
             originalResponse.headers(setCookieHeader).forEach {
                 cookies.add(it)
@@ -60,6 +61,14 @@ class SaveReceivedCookiesInterceptor(private val context: Context) : Interceptor
         return originalResponse
     }
 
+}
+
+fun Context.removeCookiePref() {
+    PreferenceManager
+        .getDefaultSharedPreferences(this)
+        .edit {
+            remove(cookiesKey)
+        }
 }
 
 fun OkHttpClient.Builder.setCookieStore(context: Context): OkHttpClient.Builder {

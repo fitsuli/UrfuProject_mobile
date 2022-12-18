@@ -16,15 +16,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import ru.fitsuli.petsmobile.ui.screens.FoundScreen
+import androidx.navigation.navArgument
+import ru.fitsuli.petsmobile.ui.screens.AddAnimalScreen
+import ru.fitsuli.petsmobile.ui.screens.InnerAnimalPage
 import ru.fitsuli.petsmobile.ui.screens.InnerShelterScreen
-import ru.fitsuli.petsmobile.ui.screens.LostScreen
 import ru.fitsuli.petsmobile.ui.screens.ProfileScreen
-import ru.fitsuli.petsmobile.ui.screens.ShelterScreen
 import ru.fitsuli.petsmobile.ui.screens.SignInScreen
+import ru.fitsuli.petsmobile.ui.screens.feed.FoundScreen
+import ru.fitsuli.petsmobile.ui.screens.feed.LostScreen
+import ru.fitsuli.petsmobile.ui.screens.feed.ShelterScreen
 
 /**
  * Created by Dmitry Danilyuk at 16.11.2022
@@ -34,6 +38,10 @@ import ru.fitsuli.petsmobile.ui.screens.SignInScreen
 fun Navigation() {
     val navController = rememberNavController()
     val appState = remember(navController) { AppState(navController) }
+
+    val onNavigateToAddAnimalScreen: (animalId: String) -> Unit = {
+        navController.navigate(Destinations.INNER_ANIMAL_PAGE + "?animalId=$it")
+    }
 
     Scaffold(
         bottomBar = {
@@ -63,7 +71,10 @@ fun Navigation() {
                 )
             }
             composable(BottomBarTabs.LOST.route) {
-                LostScreen()
+                LostScreen(
+                    onOpenAddAnimal = { navController.navigate(Destinations.ADD_LOST_ANIMAL) },
+                    onOpenAnimal = onNavigateToAddAnimalScreen
+                )
             }
             composable(BottomBarTabs.FOUND.route) {
                 FoundScreen()
@@ -77,8 +88,19 @@ fun Navigation() {
             composable(Destinations.SIGN_IN) {
                 SignInScreen()
             }
+            composable(Destinations.ADD_LOST_ANIMAL) {
+                AddAnimalScreen()
+            }
+
             composable(Destinations.INNER_SHELTER) {
                 InnerShelterScreen()
+            }
+            composable(Destinations.INNER_ANIMAL_PAGE + "?animalId={animalId}",
+                arguments = listOf(navArgument("animalId") { type = NavType.StringType }
+                )) {
+                it.arguments?.getString("animalId")?.let { animalId ->
+                    InnerAnimalPage(animalId)
+                }
             }
         }
     }

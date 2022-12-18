@@ -1,4 +1,4 @@
-package ru.fitsuli.petsmobile.ui.screens
+package ru.fitsuli.petsmobile.ui.screens.feed
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

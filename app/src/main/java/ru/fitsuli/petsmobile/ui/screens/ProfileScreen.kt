@@ -33,11 +33,18 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             Text(text = "${viewModel.userInfo}")
+            if (viewModel.userInfo == null) {
+                Button(onClick = onNavigateToSignIn) {
+                    Text(text = "Sign in")
+                }
+
+            } else {
+                Button(onClick = viewModel::signOut) {
+                    Text(text = "Sign out")
+                }
+            }
             Button(onClick = viewModel::getMe) {
                 Text(text = "Get me")
-            }
-            Button(onClick = onNavigateToSignIn) {
-                Text(text = "Sign in")
             }
         }
     }

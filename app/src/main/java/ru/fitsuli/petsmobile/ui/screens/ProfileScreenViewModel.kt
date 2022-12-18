@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import ru.fitsuli.petsmobile.data.dto.UserEntity
 import ru.fitsuli.petsmobile.ui.BaseViewModel
 import ru.fitsuli.petsmobile.ui.BottomBarTabs
+import ru.fitsuli.petsmobile.utils.removeCookiePref
 import timber.log.Timber
 
 /**
@@ -27,6 +28,14 @@ class ProfileScreenViewModel(application: Application) : BaseViewModel(applicati
                 userInfo = it
                 Timber.d("me: $it")
             }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            Timber.d("signOut()")
+            context.removeCookiePref()
+            userInfo = null
         }
     }
 }

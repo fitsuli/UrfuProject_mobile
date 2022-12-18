@@ -1,4 +1,4 @@
-package ru.fitsuli.petsmobile.ui.screens
+package ru.fitsuli.petsmobile.ui.screens.feed
 
 import android.app.Application
 import ru.fitsuli.petsmobile.ui.BaseViewModel

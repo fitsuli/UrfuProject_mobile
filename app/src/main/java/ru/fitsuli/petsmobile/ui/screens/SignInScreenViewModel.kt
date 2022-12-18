@@ -18,36 +18,46 @@ import timber.log.Timber
  */
 class SignInScreenViewModel(application: Application) : BaseViewModel(application) {
 
-    var isSignUpSuccessful by mutableStateOf<Boolean?>(null)
-        private set
-
-    var isSignInSuccessful by mutableStateOf<Boolean?>(null)
+    var viewState by mutableStateOf(SignInScreenState())
         private set
 
     fun signIn(login: String, password: String) {
         viewModelScope.launch {
+            viewState = viewState.copy(isLoading = true)
             apiClient.signIn(login, password)
                 .suspendOnSuccess {
-                    Timber.e("signIn: $data")
-                    isSignInSuccessful = true
+                    Timber.d("signIn() success")
+                    viewState = viewState.copy(isSignInSuccessful = true)
                 }
                 .suspendOnFailure {
-                    Timber.e("signIn: ${message()}")
-                    isSignInSuccessful = false
+                    Timber.d("signIn() failed: ${message()}")
+                    viewState = viewState.copy(isSignInSuccessful = false)
                 }
+
+            viewState = viewState.copy(isLoading = false)
         }
     }
 
     fun signUp(signUp: SignUpEntity) {
         viewModelScope.launch {
+            viewState = viewState.copy(isLoading = true)
             apiClient.signUp(signUp)
                 .suspendOnSuccess {
-                    Timber.d("signUp: $data")
-                    isSignUpSuccessful = true
+                    Timber.d("signUp() success")
+                    viewState = viewState.copy(isSignUpSuccessful = true)
                 }.suspendOnFailure {
-                    Timber.d("signUp: ${message()}")
-                    isSignUpSuccessful = false
+                    Timber.d("signUp() failed: ${message()}")
+                    viewState = viewState.copy(isSignUpSuccessful = false)
                 }
+
+            viewState = viewState.copy(isLoading = false)
         }
     }
 }
+
+data class SignInScreenState(
+    val isLoading: Boolean = false,
+    val isUserSignedIn: Boolean = false,
+    val isSignInSuccessful: Boolean? = null,
+    val isSignUpSuccessful: Boolean? = null,
+)

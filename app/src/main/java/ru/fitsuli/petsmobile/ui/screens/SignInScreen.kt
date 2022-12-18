@@ -11,6 +11,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +55,13 @@ fun SignInScreen(
             }
         }
     }
-
+    LaunchedEffect(viewModel.viewState) {
+        viewModel.viewState.isSignUpSuccessful?.let {
+            if (it) {
+                page = SignInPages.SIGN_IN
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

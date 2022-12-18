@@ -6,6 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
 import ru.fitsuli.petsmobile.data.dto.SignUpEntity
 import ru.fitsuli.petsmobile.data.dto.UserEntity
 
@@ -26,5 +27,7 @@ interface PetApi {
     @GET("users/me")
     suspend fun me(): ApiResponse<UserEntity>
 
+    @GET("lostAnimals")
+    suspend fun getLostPets(): ApiResponse<List<LostAnimalEntity>>
 
 }
