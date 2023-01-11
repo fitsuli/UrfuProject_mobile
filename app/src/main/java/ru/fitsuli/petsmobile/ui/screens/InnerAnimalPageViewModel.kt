@@ -1,6 +1,13 @@
 package ru.fitsuli.petsmobile.ui.screens
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import com.skydoves.sandwich.getOrNull
+import kotlinx.coroutines.launch
+import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
 import ru.fitsuli.petsmobile.ui.BaseViewModel
 
 /**
@@ -8,7 +15,11 @@ import ru.fitsuli.petsmobile.ui.BaseViewModel
  */
 class InnerAnimalPageViewModel(application: Application) : BaseViewModel(application) {
 
-    fun loadAnimal(animalId: String) {
+    var animal by mutableStateOf<LostAnimalEntity?>(null)
 
+    fun loadAnimal(animalId: String) {
+        viewModelScope.launch {
+            animal = apiClient.getLostPetById(animalId).getOrNull()
+        }
     }
 }

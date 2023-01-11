@@ -6,5 +6,6 @@ package ru.fitsuli.petsmobile.data.dto
 data class UserEntity(
     val id: String,
     val fullName: String,
-    val role: String
+    val role: String,
+    val phone: String
 )
