@@ -1,6 +1,7 @@
 package ru.fitsuli.petsmobile
 
 import android.app.Application
+import com.yandex.mapkit.MapKitFactory
 import ru.fitsuli.petsmobile.data.network.PetApi
 import ru.fitsuli.petsmobile.utils.newRetrofit
 import timber.log.Timber
@@ -17,7 +18,11 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        MapKitFactory.setApiKey(MAPKIT_API_KEY)
         // TODO
         Timber.plant(Timber.DebugTree())
     }
 }
+
+// TODO
+private const val MAPKIT_API_KEY = "19e797a0-4ad9-4d82-9e6c-166d982feb71"

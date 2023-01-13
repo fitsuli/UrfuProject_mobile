@@ -4,28 +4,29 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.contentColorFor
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.yandex.mapkit.Animation
+import com.yandex.mapkit.MapKitFactory
+import com.yandex.mapkit.geometry.Point
+import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.mapview.MapView
+import timber.log.Timber
 
 /**
  * Created by Dmitry Danilyuk at 16.11.2022
@@ -96,7 +97,7 @@ fun SimpleScaffold(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClickableRoundedSurface(
+fun RoundedSurface(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = DefaultShape,
@@ -119,3 +120,79 @@ fun ClickableRoundedSurface(
     border = border,
     content = content
 )
+
+@Composable
+fun RoundedSurface(
+    modifier: Modifier = Modifier,
+    shape: Shape = DefaultShape,
+    color: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = contentColorFor(color),
+    tonalElevation: Dp = 2.dp,
+    shadowElevation: Dp = 0.dp,
+    border: BorderStroke? = null,
+    content: @Composable () -> Unit
+) = Surface(
+    modifier = modifier.fillMaxWidth(),
+    shape = shape,
+    color = color,
+    contentColor = contentColor,
+    tonalElevation = tonalElevation,
+    shadowElevation = shadowElevation,
+    border = border,
+    content = content
+)
+
+@Composable
+fun YandexMapKit(
+    latitude: Double,
+    longitude: Double,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val centerPoint by remember {
+        derivedStateOf { Point(latitude, longitude) }
+    }
+    val mapView = remember {
+        MapView(context)
+    }
+
+    AndroidView(factory = {
+        mapView
+    }, update = {
+        it.map.move(
+            CameraPosition(centerPoint, 11f, 0f, 0f),
+            Animation(Animation.Type.SMOOTH, 500f),
+            null
+        )
+    }, modifier = modifier.fillMaxWidth())
+
+
+    LaunchedEffect(Unit) {
+        if (!isMapKitInitialized) {
+            MapKitFactory.initialize(context)
+            isMapKitInitialized = true
+        }
+    }
+
+    DisposableEffect(Unit) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    mapView.onStart(); Timber.d("onStart")
+                }
+
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                else -> {}
+            }
+        }
+        lifecycle.addObserver(observer)
+
+        onDispose {
+            mapView.onStop()
+            lifecycle.removeObserver(observer)
+        }
+    }
+}
+
+var isMapKitInitialized = false

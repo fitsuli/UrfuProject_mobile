@@ -20,7 +20,7 @@ fun PetItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ClickableRoundedSurface(
+    RoundedSurface(
         modifier = modifier,
         onClick = onClick
     ) {

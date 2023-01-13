@@ -21,8 +21,8 @@ data class LostAnimalEntity(
     val id: String
 )
 
-enum class Gender(val value: Int) {
-    MALE(0), FEMALE(1)
+enum class Gender(val value: Int, val text: String) {
+    MALE(0, "Мужской"), FEMALE(1, "Женский")
 }
 
 data class Contacts(

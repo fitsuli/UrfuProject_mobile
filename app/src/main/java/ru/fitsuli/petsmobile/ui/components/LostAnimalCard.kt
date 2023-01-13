@@ -9,10 +9,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import ru.fitsuli.petsmobile.utils.Utils.formatDateDefault
 
 /**
  * Created by Dmitry Danilyuk at 19.12.2022
@@ -23,7 +20,7 @@ fun LostAnimalCard(
     animal: LostAnimalEntity,
     modifier: Modifier = Modifier,
 ) {
-    ClickableRoundedSurface(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+    RoundedSurface(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -57,10 +54,7 @@ fun LostAnimalCard(
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = ZonedDateTime.ofInstant(
-                    Instant.parse(animal.lostDate),
-                    ZoneId.systemDefault()
-                ).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                text = formatDateDefault(animal.lostDate),
             )
         }
     }
