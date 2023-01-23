@@ -9,18 +9,16 @@ import com.skydoves.sandwich.message
 import com.skydoves.sandwich.onFailure
 import com.skydoves.sandwich.onSuccess
 import kotlinx.coroutines.launch
-import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
+import ru.fitsuli.petsmobile.data.dto.AnimalEntity
 import ru.fitsuli.petsmobile.ui.BaseViewModel
-import ru.fitsuli.petsmobile.ui.BottomBarTabs
 import timber.log.Timber
 
 /**
  * Created by Dmitry Danilyuk at 16.11.2022
  */
 class LostScreenViewModel(application: Application) : BaseViewModel(application) {
-    val tabInfo = BottomBarTabs.LOST
 
-    var animalList by mutableStateOf(emptyList<LostAnimalEntity>())
+    var animalList by mutableStateOf(emptyList<AnimalEntity>())
         private set
 
     fun getLostAnimals() {

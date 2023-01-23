@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="plural_years">
-        <item quantity="zero">0 years</item>
-        <item quantity="one">%1$d year</item>
-        <item quantity="two">%1$d years</item>
-        <item quantity="few">%1$d years</item>
-        <item quantity="many">%1$d years</item>
-        <item quantity="other">%1$d years</item>
+        <item quantity="zero">0 лет</item>
+        <item quantity="one">%1$d год</item>
+        <item quantity="two">%1$d года</item>
+        <item quantity="few">%1$d лет</item>
+        <item quantity="many">%1$d лет</item>
+        <item quantity="other">%1$d лет</item>
     </plurals>
 </resources>

@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
+import ru.fitsuli.petsmobile.data.dto.AnimalEntity
 import ru.fitsuli.petsmobile.utils.Utils.formatDateDefault
 
 /**
@@ -17,7 +17,7 @@ import ru.fitsuli.petsmobile.utils.Utils.formatDateDefault
 @Composable
 fun LostAnimalCard(
     onClick: () -> Unit,
-    animal: LostAnimalEntity,
+    animal: AnimalEntity,
     modifier: Modifier = Modifier,
 ) {
     RoundedSurface(onClick = onClick, modifier = modifier.fillMaxWidth()) {
@@ -29,17 +29,16 @@ fun LostAnimalCard(
 
             animal.fileNames.getOrNull(0)?.let { fileName ->
                 AsyncImage(
-                    model = "http://10.0.2.2:7257/LostAnimalsImages/$fileName",
+                    model = "http://localhost:7257/AnimalsImages/$fileName",
                     contentDescription = "Animal",
                     modifier = Modifier
-                        .fillMaxWidth()
                         .clip(DefaultShape)
                 )
             } ?: Text(text = "No image")
 
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = animal.animalName,
+                text = animal.animalName.toString(),
                 style = MaterialTheme.typography.titleLarge
             )
 
@@ -50,11 +49,11 @@ fun LostAnimalCard(
             )
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = animal.lostAddressFull)
+            Text(text = animal.addressFull.toString())
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = formatDateDefault(animal.lostDate),
+                text = formatDateDefault(animal.date),
             )
         }
     }

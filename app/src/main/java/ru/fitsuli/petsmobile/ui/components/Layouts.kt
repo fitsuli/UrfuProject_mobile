@@ -1,32 +1,25 @@
 package ru.fitsuli.petsmobile.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import com.yandex.mapkit.Animation
-import com.yandex.mapkit.MapKitFactory
-import com.yandex.mapkit.geometry.Point
-import com.yandex.mapkit.map.CameraPosition
-import com.yandex.mapkit.mapview.MapView
-import timber.log.Timber
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
 
 /**
  * Created by Dmitry Danilyuk at 16.11.2022
@@ -68,6 +61,7 @@ fun rememberCollapsableScrollBehavior(): TopAppBarScrollBehavior {
 fun SimpleScaffold(
     headerText: String,
     modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
@@ -85,6 +79,7 @@ fun SimpleScaffold(
             DefLargeTopAppBar(
                 title = headerText,
                 onBackClicked = onBackPressed,
+                actions = actions,
                 scrollBehavior = scrollBehavior
             )
         }, bottomBar = bottomBar,
@@ -143,56 +138,95 @@ fun RoundedSurface(
 )
 
 @Composable
-fun YandexMapKit(
-    latitude: Double,
-    longitude: Double,
-    modifier: Modifier = Modifier
+fun GoogleMaps(
+    center: LatLng,
+    modifier: Modifier = Modifier,
+    content: (@Composable @GoogleMapComposable () -> Unit)? = null
 ) {
-    val context = LocalContext.current
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val centerPoint by remember {
-        derivedStateOf { Point(latitude, longitude) }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(center, 11f)
     }
-    val mapView = remember {
-        MapView(context)
-    }
-
-    AndroidView(factory = {
-        mapView
-    }, update = {
-        it.map.move(
-            CameraPosition(centerPoint, 11f, 0f, 0f),
-            Animation(Animation.Type.SMOOTH, 500f),
-            null
+    val mapProperties by remember {
+        mutableStateOf(
+            MapProperties(
+                isBuildingEnabled = true
+            )
         )
-    }, modifier = modifier.fillMaxWidth())
-
-
-    LaunchedEffect(Unit) {
-        if (!isMapKitInitialized) {
-            MapKitFactory.initialize(context)
-            isMapKitInitialized = true
-        }
     }
-
-    DisposableEffect(Unit) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> {
-                    mapView.onStart(); Timber.d("onStart")
-                }
-
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                else -> {}
-            }
-        }
-        lifecycle.addObserver(observer)
-
-        onDispose {
-            mapView.onStop()
-            lifecycle.removeObserver(observer)
-        }
+    val mapUiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(mapToolbarEnabled = false)
+        )
+    }
+    Box(modifier = modifier.fillMaxSize()) {
+        GoogleMap(
+            properties = mapProperties, uiSettings = mapUiSettings,
+            cameraPositionState = cameraPositionState, content = content
+        )
     }
 }
 
-var isMapKitInitialized = false
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ToggleButtonAnim(
+    onClick: () -> Unit,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    checkedColor: Color = MaterialTheme.colorScheme.primary,
+    onCheckedColor: Color = MaterialTheme.colorScheme.onPrimary,
+    uncheckedColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+    onUncheckedColor: Color = MaterialTheme.colorScheme.onBackground,
+    shape: Shape = RoundedCornerShape(25),
+    border: BorderStroke? = null,
+    useSmallPadding: Boolean = false,
+    fillInnerWidth: Boolean = false,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable RowScope.() -> Unit
+) {
+    val animateColor by animateColorAsState(
+        targetValue = if (checked) checkedColor else uncheckedColor,
+        animationSpec = tween(300)
+    )
+    val animateContentColor by animateColorAsState(
+        targetValue = if (checked) onCheckedColor else onUncheckedColor,
+        animationSpec = tween(300)
+    )
+
+    val contentPadding = if (useSmallPadding) PaddingValues(
+        horizontal = 0.dp,
+        vertical = 8.dp
+    ) else PaddingValues(
+        horizontal = 24.dp,
+        vertical = 20.dp
+    )
+
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = shape,
+        color = animateColor,
+        contentColor = animateContentColor,
+        tonalElevation = 0.dp,
+        border = border,
+        interactionSource = interactionSource
+    ) {
+        CompositionLocalProvider(LocalContentColor provides animateContentColor) {
+            ProvideTextStyle(value = MaterialTheme.typography.labelLarge) {
+                Row(
+                    Modifier
+                        .defaultMinSize(
+                            minWidth = ButtonDefaults.MinWidth,
+                            minHeight = ButtonDefaults.MinHeight
+                        )
+                        .padding(contentPadding)
+                        .run { if (fillInnerWidth) fillMaxWidth() else this },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = content
+                )
+            }
+        }
+    }
+}

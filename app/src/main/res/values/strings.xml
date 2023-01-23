@@ -1,11 +1,15 @@
 <resources>
     <string name="app_name">PetsMobile</string>
 
-    <string name="shelter">Shelter</string>
-    <string name="lost">Lost</string>
-    <string name="found">Found</string>
-    <string name="profile">Profile</string>
-    <string name="pet_internal">Inner Screen</string>
+    <string name="lost">Потерянные</string>
+    <string name="lost_screen_header">Потерянные животные</string>
+    <string name="found">Найденные</string>
+    <string name="found_screen_header">Найденные животные</string>
+    <string name="map">Карта</string>
+    <string name="profile">Профиль</string>
+    <string name="create_post">Создать объявление</string>
+    <string name="pet_internal">Внутренний экран</string>
+    <string name="sign_in">Войти</string>
 
     <string name="adopt">Adopt</string>
 </resources>

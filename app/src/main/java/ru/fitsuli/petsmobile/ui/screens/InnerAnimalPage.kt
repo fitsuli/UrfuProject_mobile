@@ -1,6 +1,8 @@
 package ru.fitsuli.petsmobile.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,22 +24,29 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import ru.fitsuli.petsmobile.R
+import ru.fitsuli.petsmobile.data.dto.AnimalEntity
 import ru.fitsuli.petsmobile.data.dto.Contacts
 import ru.fitsuli.petsmobile.data.dto.Gender
-import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
+import ru.fitsuli.petsmobile.ui.components.GoogleMaps
 import ru.fitsuli.petsmobile.ui.components.RoundedSurface
 import ru.fitsuli.petsmobile.ui.components.SimpleScaffold
-import ru.fitsuli.petsmobile.ui.components.YandexMapKit
 import ru.fitsuli.petsmobile.utils.Utils
 
 /**
  * Created by Dmitry Danilyuk at 19.12.2022
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
 @Composable
 fun InnerAnimalPage(
     animalId: String,
+    isLandscape: Boolean,
+    onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: InnerAnimalPageViewModel = viewModel()
 ) {
@@ -49,66 +58,80 @@ fun InnerAnimalPage(
         if (it.gender == Gender.MALE.value) "Потерялся ${it.animalName}" else "Потерялась ${it.animalName}"
     } ?: "Потерялся"
 
-    SimpleScaffold(headerText = headerText, modifier = modifier) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
+    SimpleScaffold(
+        headerText = headerText,
+        onBackPressed = onBackPressed,
+        modifier = modifier
+    ) { paddingValues ->
+        AnimatedVisibility(
+            visible = viewModel.animal != null,
+            enter = fadeIn() + slideInVertically(
+                initialOffsetY = { -it / 4 }
+            ),
         ) {
-            Row(
+            Column(
                 modifier = Modifier
-                    .aspectRatio(1f)
-                    .horizontalScroll(rememberScrollState())
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+                    .padding(horizontal = 8.dp)
             ) {
-                viewModel.animal?.fileNames?.forEach { fileName ->
-                    AsyncImage(
-                        model = "http://10.0.2.2:7257/LostAnimalsImages/$fileName",
-                        contentDescription = "Animal",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                    )
-                } ?: Text(text = "No images")
-            }
-
-            AnimatedVisibility(visible = viewModel.animal != null) {
-                DescriptionCard(
-                    animal = viewModel.animal!!,
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 16.dp)
-                )
-            }
+                    //.height(intrinsicSize = IntrinsicSize.Max)
+                ) {
+                    HorizontalPager(
+                        count = viewModel.animal!!.fileNames.size, key = { it },
+                        itemSpacing = 12.dp,
+                        modifier = Modifier
+                            .fillMaxWidth(0.4f)
+                            .run { if (isLandscape) this.aspectRatio(2f) else this.fillMaxHeight() }
+                            .clip(RoundedCornerShape(8.dp))
+                    ) { page ->
+                        viewModel.animal?.fileNames?.getOrNull(page)?.let { fileName ->
+                            AsyncImage(
+                                model = "http://localhost:7257/AnimalsImages/$fileName",
+                                contentDescription = "Animal",
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+                        }
+                    }
 
-            AnimatedVisibility(visible = viewModel.animal != null) {
+                    if (isLandscape) {
+                        DescriptionCard(
+                            animal = viewModel.animal!!,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        )
+                    }
+                }
+
+                if (!isLandscape) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DescriptionCard(
+                        animal = viewModel.animal!!
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
                 ContactsCard(
                     contacts = viewModel.animal!!.contacts,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 16.dp)
                 )
-            }
 
-            AnimatedVisibility(visible = viewModel.animal != null) {
+                Spacer(modifier = Modifier.height(16.dp))
                 LocationCard(
                     animal = viewModel.animal!!,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 16.dp)
                 )
             }
-            Text(text = "${viewModel.animal}")
-
         }
     }
 }
 
 @Composable
 fun DescriptionCard(
-    animal: LostAnimalEntity,
+    animal: AnimalEntity,
     modifier: Modifier = Modifier,
 ) {
     RoundedSurface(modifier) {
@@ -119,7 +142,7 @@ fun DescriptionCard(
         ) {
             Text(
                 text = "Описание",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(text = animal.description)
@@ -197,7 +220,7 @@ fun ContactsCard(
         ) {
             Text(
                 text = "Контакты",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -262,11 +285,11 @@ fun ContactBlock(
 
 @Composable
 fun LocationCard(
-    animal: LostAnimalEntity,
+    animal: AnimalEntity,
     modifier: Modifier = Modifier
 ) {
     val formattedDate by remember {
-        derivedStateOf { Utils.formatDateDefault(animal.lostDate) }
+        derivedStateOf { Utils.formatDateDefault(animal.date) }
     }
     RoundedSurface(modifier) {
         Column(
@@ -276,18 +299,18 @@ fun LocationCard(
         ) {
             Text(
                 text = "Место и время пропажи",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
 
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Город: ${animal.lostAddressCity}",
+                text = "Город: ${animal.addressCity}",
                 style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Место: ${animal.lostAddressFull}",
+                text = "Место: ${animal.addressFull}",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -299,13 +322,22 @@ fun LocationCard(
 
             Spacer(modifier = Modifier.height(12.dp))
             RoundedSurface {
-                YandexMapKit(
-                    latitude = 55.75,
-                    longitude = 37.57,
+                val latlng by remember {
+                    derivedStateOf {
+                        val (long, lat) = animal.geoPosition.split(" ").map { it.toDouble() }
+                        LatLng(lat, long)
+                    }
+                }
+                GoogleMaps(
+                    center = latlng,
                     modifier = Modifier
                         .aspectRatio(2f),
-//                    lat = animal.lostAddressLat,
-//                    lon = animal.lostAddressLon
+                    content = {
+                        Marker(
+                            state = MarkerState(position = latlng),
+                            title = "Место пропажи"
+                        )
+                    }
                 )
             }
         }

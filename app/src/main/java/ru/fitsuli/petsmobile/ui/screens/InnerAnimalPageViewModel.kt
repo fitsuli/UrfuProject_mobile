@@ -7,7 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.skydoves.sandwich.getOrNull
 import kotlinx.coroutines.launch
-import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
+import ru.fitsuli.petsmobile.data.dto.AnimalEntity
 import ru.fitsuli.petsmobile.ui.BaseViewModel
 
 /**
@@ -15,7 +15,7 @@ import ru.fitsuli.petsmobile.ui.BaseViewModel
  */
 class InnerAnimalPageViewModel(application: Application) : BaseViewModel(application) {
 
-    var animal by mutableStateOf<LostAnimalEntity?>(null)
+    var animal by mutableStateOf<AnimalEntity?>(null)
 
     fun loadAnimal(animalId: String) {
         viewModelScope.launch {

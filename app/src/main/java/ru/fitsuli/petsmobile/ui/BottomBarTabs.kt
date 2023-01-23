@@ -2,8 +2,8 @@ package ru.fitsuli.petsmobile.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.NearMe
-import androidx.compose.material.icons.rounded.NightShelter
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -29,10 +29,10 @@ enum class BottomBarTabs(
         icon = Icons.Rounded.NearMe
     ),
 
-    SHELTER(
-        route = Destinations.SHELTER,
-        labelResId = R.string.shelter,
-        icon = Icons.Rounded.NightShelter
+    MAP(
+        route = Destinations.MAP,
+        labelResId = R.string.map,
+        icon = Icons.Rounded.Map
     ),
 
     PROFILE(

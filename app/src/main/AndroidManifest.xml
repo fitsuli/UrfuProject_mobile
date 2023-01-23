@@ -18,6 +18,11 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.PetsMobile"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDqpSB-Pg3C-BzIr3q2HTh882lIwhnAS2U" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

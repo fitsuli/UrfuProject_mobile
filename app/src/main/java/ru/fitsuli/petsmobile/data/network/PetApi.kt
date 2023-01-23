@@ -1,9 +1,9 @@
 package ru.fitsuli.petsmobile.data.network
 
 import com.skydoves.sandwich.ApiResponse
+import okhttp3.RequestBody
 import retrofit2.http.*
-import ru.fitsuli.petsmobile.data.dto.CreateLostAnimalEntityDto
-import ru.fitsuli.petsmobile.data.dto.LostAnimalEntity
+import ru.fitsuli.petsmobile.data.dto.AnimalEntity
 import ru.fitsuli.petsmobile.data.dto.SignUpEntity
 import ru.fitsuli.petsmobile.data.dto.UserEntity
 
@@ -25,13 +25,21 @@ interface PetApi {
     suspend fun me(): ApiResponse<UserEntity>
 
     @GET("lostAnimals")
-    suspend fun getLostPets(): ApiResponse<List<LostAnimalEntity>>
+    suspend fun getLostPets(): ApiResponse<List<AnimalEntity>>
 
     @GET("lostAnimals/{id}")
-    suspend fun getLostPetById(@Path("id") id: String): ApiResponse<LostAnimalEntity>
+    suspend fun getLostPetById(@Path("id") id: String): ApiResponse<AnimalEntity>
 
-    // TODO: doesn't work
-    @POST("lostAnimals")
+    @GET("foundAnimals")
+    suspend fun getFoundPets(): ApiResponse<List<AnimalEntity>>
+
+    @GET("foundAnimals/{id}")
+    suspend fun getFoundPetById(@Path("id") id: String): ApiResponse<AnimalEntity>
+
+    @POST
     @Headers("Content-Type: multipart/form-data")
-    suspend fun addLostPet(@Body lostAnimal: CreateLostAnimalEntityDto): ApiResponse<Unit>
+    suspend fun addLostPet(
+        @Url url: String,
+        @Body requestBody: RequestBody
+    ): ApiResponse<Unit>
 }
