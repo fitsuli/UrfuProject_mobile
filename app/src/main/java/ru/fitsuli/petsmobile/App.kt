@@ -17,8 +17,10 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         // TODO
+//        if (BuildConfig.DEBUG) {
         Timber.plant(Timber.DebugTree())
+//        }
     }
 }
 
-private const val GOOGLE_MAP_API_KEY = "AIzaSyDqpSB-Pg3C-BzIr3q2HTh882lIwhnAS2U"
+const val GOOGLE_MAP_API_KEY = "AIzaSyDqpSB-Pg3C-BzIr3q2HTh882lIwhnAS2U"

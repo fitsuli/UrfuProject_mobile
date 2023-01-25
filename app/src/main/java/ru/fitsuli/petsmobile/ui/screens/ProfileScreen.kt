@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.fitsuli.petsmobile.R
 import ru.fitsuli.petsmobile.ui.components.SimpleScaffold
 
 /**
@@ -25,7 +26,7 @@ fun ProfileScreen(
 ) {
     SimpleScaffold(
         modifier = modifier,
-        headerText = stringResource(id = viewModel.tabInfo.labelResId)
+        headerText = stringResource(id = R.string.profile)
     ) { paddingValues ->
         Column(
             modifier = Modifier

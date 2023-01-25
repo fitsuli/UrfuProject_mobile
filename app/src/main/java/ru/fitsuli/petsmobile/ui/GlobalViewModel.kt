@@ -1,4 +1,4 @@
-package ru.fitsuli.petsmobile.ui.screens
+package ru.fitsuli.petsmobile.ui
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -8,15 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.skydoves.sandwich.getOrNull
 import kotlinx.coroutines.launch
 import ru.fitsuli.petsmobile.data.dto.UserEntity
-import ru.fitsuli.petsmobile.ui.BaseViewModel
 import ru.fitsuli.petsmobile.utils.removeCookiePref
 import timber.log.Timber
 
 /**
- * Created by Dmitry Danilyuk at 06.12.2022
+ * Created by Dmitry Danilyuk at 23.01.2023
  */
-class ProfileScreenViewModel(application: Application) : BaseViewModel(application) {
-
+class GlobalViewModel(application: Application) : BaseViewModel(application) {
     var userInfo by mutableStateOf<UserEntity?>(null)
         private set
 
@@ -27,6 +25,10 @@ class ProfileScreenViewModel(application: Application) : BaseViewModel(applicati
                 Timber.d("me: $it")
             }
         }
+    }
+
+    init {
+        getMe()
     }
 
     fun signOut() {

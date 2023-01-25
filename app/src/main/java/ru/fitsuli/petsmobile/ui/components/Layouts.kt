@@ -52,6 +52,29 @@ fun DefLargeTopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun DefTopAppBar(
+    title: String,
+    onBackClicked: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+) = TopAppBar(
+    title = { Text(text = title) },
+    navigationIcon = {
+        if (onBackClicked != null) {
+            IconButton(onClick = onBackClicked) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowBack,
+                    contentDescription = "Arrow back",
+                )
+            }
+        }
+    },
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun rememberCollapsableScrollBehavior(): TopAppBarScrollBehavior {
     return TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 }
@@ -61,6 +84,7 @@ fun rememberCollapsableScrollBehavior(): TopAppBarScrollBehavior {
 fun SimpleScaffold(
     headerText: String,
     modifier: Modifier = Modifier,
+    useLargeTopAppBar: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
@@ -76,12 +100,21 @@ fun SimpleScaffold(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            DefLargeTopAppBar(
-                title = headerText,
-                onBackClicked = onBackPressed,
-                actions = actions,
-                scrollBehavior = scrollBehavior
-            )
+            if (useLargeTopAppBar) {
+                DefLargeTopAppBar(
+                    title = headerText,
+                    onBackClicked = onBackPressed,
+                    actions = actions,
+                    scrollBehavior = scrollBehavior
+                )
+            } else {
+                DefTopAppBar(
+                    title = headerText,
+                    onBackClicked = onBackPressed,
+                    actions = actions,
+                    scrollBehavior = scrollBehavior
+                )
+            }
         }, bottomBar = bottomBar,
         snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
@@ -141,6 +174,7 @@ fun RoundedSurface(
 fun GoogleMaps(
     center: LatLng,
     modifier: Modifier = Modifier,
+    onMapReady: () -> Unit = {},
     content: (@Composable @GoogleMapComposable () -> Unit)? = null
 ) {
     val cameraPositionState = rememberCameraPositionState {
@@ -161,6 +195,7 @@ fun GoogleMaps(
     Box(modifier = modifier.fillMaxSize()) {
         GoogleMap(
             properties = mapProperties, uiSettings = mapUiSettings,
+            onMapLoaded = onMapReady,
             cameraPositionState = cameraPositionState, content = content
         )
     }

@@ -82,7 +82,7 @@ private fun SignInPage(
         TextField(
             value = login,
             onValueChange = { login = it },
-            label = { Text(text = "Login") },
+            label = { Text(text = "Логин") },
         )
         TextField(
             value = password,
@@ -120,7 +120,7 @@ private fun SignUpPage(
         TextField(
             value = signUp.login,
             onValueChange = { signUp = signUp.copy(login = it) },
-            label = { Text(text = "Login") }
+            label = { Text(text = "Логин") }
         )
         TextField(
             value = signUp.password,

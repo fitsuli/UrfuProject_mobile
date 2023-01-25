@@ -8,7 +8,7 @@ import java.io.File
 data class AnimalEntity(
     val animalName: String?,
     val animalType: String,
-    val addressFull: String?,
+    val addressFull: String,
     val addressCity: String,
     val geoPosition: String,
     val date: String,
@@ -29,13 +29,13 @@ enum class Gender(val value: Int, val text: String) {
 data class Contacts(
     val name: String,
     val phone: String,
-    val email: String,
-    val telegram: String,
-    val vk: String,
+    val email: String?,
+    val telegram: String?,
+    val vk: String?,
 )
 
 data class CreateAnimalEntityDto(
-    val animalName: String = "",
+    val animalName: String? = null,
     val animalType: String = "Собака",
     val addressFull: String = "",
     val addressCity: String = "",
@@ -49,4 +49,14 @@ data class CreateAnimalEntityDto(
     val files: List<File> = emptyList(),
     val userId: String? = null,
     val id: String? = null,
-)
+) {
+    fun isValid(): Boolean {
+        return geoPosition.isNotEmpty() &&
+                ///addressCity.isNotEmpty() &&
+                date.isNotEmpty() &&
+                description.isNotEmpty() &&
+                contacts.name.isNotEmpty() &&
+                contacts.phone.isNotEmpty()
+//                && files.isNotEmpty()
+    }
+}

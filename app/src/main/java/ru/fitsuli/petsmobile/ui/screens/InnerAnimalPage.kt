@@ -1,26 +1,25 @@
 package ru.fitsuli.petsmobile.ui.screens
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Chat
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Phone
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -45,29 +44,46 @@ import ru.fitsuli.petsmobile.utils.Utils
 @Composable
 fun InnerAnimalPage(
     animalId: String,
-    isLandscape: Boolean,
+    pageType: PageType,
     onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: InnerAnimalPageViewModel = viewModel()
 ) {
-    LaunchedEffect(animalId, viewModel) {
-        viewModel.loadAnimal(animalId)
+    val context = LocalContext.current
+
+    LaunchedEffect(animalId, pageType, viewModel) {
+        viewModel.loadAnimal(animalId, pageType)
     }
 
-    val headerText = viewModel.animal?.let {
-        if (it.gender == Gender.MALE.value) "Потерялся ${it.animalName}" else "Потерялась ${it.animalName}"
-    } ?: "Потерялся"
+    val headerText = if (pageType == PageType.ANIMAL_LOST) {
+        viewModel.animal?.let {
+            if (it.gender == Gender.MALE.value) "Потерялся ${it.animalName}" else "Потерялась ${it.animalName}"
+        } ?: "Потерялся"
+    } else {
+        "Нашлась ${viewModel.animal?.animalType}"
+    }
 
     SimpleScaffold(
         headerText = headerText,
         onBackPressed = onBackPressed,
+        actions = {
+            IconButton(onClick = {
+                viewModel.closePost(pageType = pageType) {
+                    Toast.makeText(context, "Запись закрыта", Toast.LENGTH_SHORT).show()
+                    onBackPressed()
+                }
+            }) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = "Delete"
+                )
+            }
+        },
         modifier = modifier
     ) { paddingValues ->
         AnimatedVisibility(
             visible = viewModel.animal != null,
-            enter = fadeIn() + slideInVertically(
-                initialOffsetY = { -it / 4 }
-            ),
+            enter = fadeIn(),
         ) {
             Column(
                 modifier = Modifier
@@ -76,44 +92,30 @@ fun InnerAnimalPage(
                     .padding(16.dp)
                     .padding(horizontal = 8.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                HorizontalPager(
+                    count = viewModel.animal!!.fileNames.size, key = { it },
+                    itemSpacing = 12.dp,
                     modifier = Modifier
-                    //.height(intrinsicSize = IntrinsicSize.Max)
-                ) {
-                    HorizontalPager(
-                        count = viewModel.animal!!.fileNames.size, key = { it },
-                        itemSpacing = 12.dp,
-                        modifier = Modifier
-                            .fillMaxWidth(0.4f)
-                            .run { if (isLandscape) this.aspectRatio(2f) else this.fillMaxHeight() }
-                            .clip(RoundedCornerShape(8.dp))
-                    ) { page ->
-                        viewModel.animal?.fileNames?.getOrNull(page)?.let { fileName ->
-                            AsyncImage(
-                                model = "http://localhost:7257/AnimalsImages/$fileName",
-                                contentDescription = "Animal",
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                            )
-                        }
-                    }
-
-                    if (isLandscape) {
-                        DescriptionCard(
-                            animal = viewModel.animal!!,
+                        .aspectRatio(2f)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                ) { page ->
+                    viewModel.animal!!.fileNames.getOrNull(page)?.let { fileName ->
+                        AsyncImage(
+                            model = "http://localhost:7257/AnimalsImages/$fileName",
+                            contentDescription = "Animal",
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
                         )
                     }
                 }
 
-                if (!isLandscape) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    DescriptionCard(
-                        animal = viewModel.animal!!
-                    )
-                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                DescriptionCard(
+                    animal = viewModel.animal!!
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
                 ContactsCard(
@@ -212,7 +214,13 @@ fun ContactsCard(
     contacts: Contacts,
     modifier: Modifier = Modifier,
 ) {
-    RoundedSurface(modifier) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
+    RoundedSurface(
+        modifier
+            .fillMaxWidth()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -224,59 +232,104 @@ fun ContactsCard(
             )
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = contacts.name,
-                style = MaterialTheme.typography.titleMedium
+
+            ContactBlock(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(text = contacts.name))
+                    Toast.makeText(context, "Имя скопировано", Toast.LENGTH_SHORT).show()
+                },
+                isVisible = contacts.name.isNotEmpty(),
+                icon = { Icon(imageVector = Icons.Rounded.Person, contentDescription = "Phone") },
+                text = contacts.name
             )
 
             Spacer(modifier = Modifier.height(12.dp))
             ContactBlock(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(text = contacts.phone))
+                    Toast.makeText(context, "Телефон скопирован", Toast.LENGTH_SHORT).show()
+                },
                 isVisible = contacts.phone.isNotEmpty(),
                 icon = { Icon(imageVector = Icons.Rounded.Phone, contentDescription = "Phone") },
                 text = contacts.phone
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            ContactBlock(
-                isVisible = contacts.email.isNotEmpty(),
-                icon = { Icon(imageVector = Icons.Rounded.Email, contentDescription = "Email") },
-                text = contacts.email
-            )
+            contacts.email?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                ContactBlock(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(text = contacts.email))
+                        Toast.makeText(context, "Email скопирован", Toast.LENGTH_SHORT).show()
+                    },
+                    isVisible = contacts.email.isNotEmpty(),
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Email,
+                            contentDescription = "Email"
+                        )
+                    },
+                    text = contacts.email
+                )
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            ContactBlock(
-                isVisible = contacts.telegram.isNotEmpty(),
-                icon = { Icon(imageVector = Icons.Rounded.Chat, contentDescription = "Telegram") },
-                text = contacts.telegram
-            )
+            contacts.telegram?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                ContactBlock(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(text = contacts.telegram))
+                        Toast.makeText(context, "Telegram ID скопирован", Toast.LENGTH_SHORT).show()
+                    },
+                    isVisible = contacts.telegram.isNotEmpty(),
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Chat,
+                            contentDescription = "Telegram"
+                        )
+                    },
+                    text = contacts.telegram
+                )
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            ContactBlock(
-                isVisible = contacts.vk.isNotEmpty(),
-                icon = { Icon(imageVector = Icons.Rounded.Chat, contentDescription = "VK") },
-                text = contacts.vk
-            )
+            contacts.vk?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                ContactBlock(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(text = contacts.vk))
+                        Toast.makeText(context, "VK ID скопирован", Toast.LENGTH_SHORT).show()
+                    },
+                    isVisible = contacts.vk.isNotEmpty(),
+                    icon = { Icon(imageVector = Icons.Rounded.Tag, contentDescription = "VK") },
+                    text = contacts.vk
+                )
+            }
         }
     }
 }
 
 @Composable
 fun ContactBlock(
+    onClick: () -> Unit,
     isVisible: Boolean,
     icon: @Composable () -> Unit,
     text: String,
     modifier: Modifier = Modifier
 ) {
     if (isVisible) {
-        RoundedSurface(modifier) {
+        RoundedSurface(onClick, modifier.fillMaxWidth()) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(12.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(16.dp)
             ) {
                 icon()
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = "Copy",
                 )
             }
         }

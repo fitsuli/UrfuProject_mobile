@@ -4,7 +4,6 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.NearMe
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.ui.graphics.vector.ImageVector
 import ru.fitsuli.petsmobile.R
@@ -33,11 +32,5 @@ enum class BottomBarTabs(
         route = Destinations.MAP,
         labelResId = R.string.map,
         icon = Icons.Rounded.Map
-    ),
-
-    PROFILE(
-        route = Destinations.PROFILE,
-        labelResId = R.string.profile,
-        icon = Icons.Rounded.Person
     )
 }

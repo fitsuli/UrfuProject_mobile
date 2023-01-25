@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -15,16 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ru.fitsuli.petsmobile.R
-import ru.fitsuli.petsmobile.ui.screens.AddAnimalScreen
-import ru.fitsuli.petsmobile.ui.screens.InnerAnimalPage
-import ru.fitsuli.petsmobile.ui.screens.ProfileScreen
-import ru.fitsuli.petsmobile.ui.screens.SignInScreen
+import ru.fitsuli.petsmobile.ui.screens.*
 import ru.fitsuli.petsmobile.ui.screens.feed.FoundScreen
 import ru.fitsuli.petsmobile.ui.screens.feed.LostScreen
 import ru.fitsuli.petsmobile.ui.screens.feed.MapScreen
@@ -34,15 +33,18 @@ import ru.fitsuli.petsmobile.ui.screens.feed.MapScreen
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Navigation(windowSizeClass: WindowSizeClass) {
+fun Navigation(
+    windowSizeClass: WindowSizeClass,
+    globalViewModel: GlobalViewModel = viewModel()
+) {
     val isLandscape = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
 
     val navController = rememberNavController()
     val appState = remember(navController) { AppState(navController) }
 
     val onBackPressed: () -> Unit = { navController.popBackStack() }
-    val onOpenAnimal: (animalId: String) -> Unit = {
-        navController.navigate(Destinations.INNER_ANIMAL_PAGE + "?animalId=$it")
+    val onOpenAnimal: (animalId: String, pageType: PageType) -> Unit = { animalId, pageType ->
+        navController.navigate(Destinations.INNER_ANIMAL_PAGE + "?animalId=$animalId" + "&typePrefix=${pageType.urlPrefix}")
     }
 
     val onOpenAddAnimal: () -> Unit = {
@@ -60,7 +62,11 @@ fun Navigation(windowSizeClass: WindowSizeClass) {
                     tabs = appState.bottomBarTabs,
                     currentRoute = appState.currentRoute.orEmpty(),
                     onTabSelected = appState::navigateToBottomBarRoute,
-                    onOpenAddAnimal = onOpenAddAnimal
+                    onOpenAddAnimal = onOpenAddAnimal,
+                    isLoggedIn = globalViewModel.userInfo != null,
+                    onOpenLogin = {
+                        appState.navigateToBottomBarRoute(Destinations.PROFILE)
+                    }
                 )
             }
         }
@@ -85,22 +91,28 @@ fun Navigation(windowSizeClass: WindowSizeClass) {
             ) {
                 composable(BottomBarTabs.MAP.route) {
                     MapScreen(
-                        onNavigateToPet = {
-                            navController.navigate(Destinations.INNER_MAP)
+                        onNavigateToAnimal = { id, pageType ->
+                            navController.navigate(
+                                Destinations.INNER_ANIMAL_PAGE + "?animalId=$id" + "&typePrefix=${pageType.urlPrefix}"
+                            )
                         }
                     )
                 }
                 composable(BottomBarTabs.LOST.route) {
                     LostScreen(
-                        onOpenAnimal = onOpenAnimal
+                        onOpenAnimal = {
+                            onOpenAnimal(it, PageType.ANIMAL_LOST)
+                        }
                     )
                 }
                 composable(BottomBarTabs.FOUND.route) {
                     FoundScreen(
-                        onOpenAnimal = onOpenAnimal
+                        onOpenAnimal = {
+                            onOpenAnimal(it, PageType.ANIMAL_FOUND)
+                        }
                     )
                 }
-                composable(BottomBarTabs.PROFILE.route) {
+                composable(Destinations.PROFILE) {
                     ProfileScreen(
                         onNavigateToSignIn = { navController.navigate(Destinations.SIGN_IN) }
                     )
@@ -115,11 +127,18 @@ fun Navigation(windowSizeClass: WindowSizeClass) {
                     )
                 }
 
-                composable(Destinations.INNER_ANIMAL_PAGE + "?animalId={animalId}",
-                    arguments = listOf(navArgument("animalId") { type = NavType.StringType }
-                    )) {
-                    it.arguments?.getString("animalId")?.let { animalId ->
-                        InnerAnimalPage(animalId, isLandscape, onBackPressed)
+                composable(Destinations.INNER_ANIMAL_PAGE + "?animalId={animalId}" + "&typePrefix={typePrefix}",
+                    arguments = listOf(
+                        navArgument("animalId") { type = NavType.StringType },
+                        navArgument("typePrefix") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    backStackEntry.arguments?.getString("animalId")?.let { animalId ->
+                        backStackEntry.arguments?.getString("typePrefix")?.let { typePrefix ->
+                            val pageType = PageType.values().find { it.urlPrefix == typePrefix }
+                                ?: PageType.ANIMAL_LOST
+                            InnerAnimalPage(animalId, pageType, onBackPressed)
+                        }
                     }
                 }
             }
@@ -128,12 +147,15 @@ fun Navigation(windowSizeClass: WindowSizeClass) {
 
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun NavigationBar(
     tabs: Array<BottomBarTabs>,
     currentRoute: String,
-    onTabSelected: (route: String) -> Unit,
+    isLoggedIn: Boolean,
+    onOpenLogin: () -> Unit,
     onOpenAddAnimal: () -> Unit,
+    onTabSelected: (route: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     BottomAppBar(
@@ -151,13 +173,22 @@ private fun NavigationBar(
                         Text(text = stringResource(id = tab.labelResId))
                     },
                     selected = currentRoute == tab.route,
+//                    alwaysShowLabel = false,
                     onClick = { onTabSelected(tab.route) }
                 )
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onOpenAddAnimal) {
-                Icon(imageVector = Icons.Rounded.Add, contentDescription = "Add")
+            AnimatedContent(targetState = isLoggedIn) { isLoggedIn ->
+                if (!isLoggedIn) {
+                    FloatingActionButton(onClick = onOpenLogin) {
+                        Icon(imageVector = Icons.Rounded.Person, contentDescription = "Login")
+                    }
+                } else {
+                    FloatingActionButton(onClick = onOpenAddAnimal) {
+                        Icon(imageVector = Icons.Rounded.Add, contentDescription = "Add")
+                    }
+                }
             }
         }
     )

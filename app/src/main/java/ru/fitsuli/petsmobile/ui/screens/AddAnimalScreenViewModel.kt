@@ -1,11 +1,19 @@
 package ru.fitsuli.petsmobile.ui.screens
 
 import android.app.Application
+import android.location.Address
+import android.location.Geocoder
+import android.location.Location
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
+import com.skydoves.sandwich.getOrNull
 import com.skydoves.sandwich.onSuccess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -13,12 +21,80 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import ru.fitsuli.petsmobile.data.dto.CreateAnimalEntityDto
 import ru.fitsuli.petsmobile.data.dto.Gender
 import ru.fitsuli.petsmobile.ui.BaseViewModel
+import timber.log.Timber
 import java.io.File
+import java.util.Locale
+
 
 /**
  * Created by Dmitry Danilyuk at 14.12.2022
  */
 class AddAnimalScreenViewModel(application: Application) : BaseViewModel(application) {
+
+    val location = MutableStateFlow(Location("").apply {
+        latitude = 56.826961
+        longitude = 60.603849
+    })
+
+    var autocompleteAddress by mutableStateOf("")
+        private set
+
+    val isSendButtonVisible by derivedStateOf {
+        createEntity.isValid()
+    }
+
+    fun getLocationFromAddress(strAddress: String, onResult: (location: Location) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val geocoder = Geocoder(context, Locale.getDefault())
+
+            val addresses: List<Address>? = geocoder.getFromLocationName(strAddress, 5)
+            Timber.d(Geocoder.isPresent().toString())
+            Timber.d("addresses: $addresses")
+
+            if (addresses?.isNotEmpty() == true) {
+                val address = addresses[0]
+
+                onResult(
+                    Location(null).apply {
+                        latitude = address.latitude
+                        longitude = address.longitude
+                    }
+                )
+            }
+
+            onResult(location.value)
+        }
+    }
+
+    fun getAddressFromLocation(location: Location, onResult: (address: String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val geocoder = Geocoder(context, Locale("ru", "RU"))
+
+            val addresses: List<Address>? = geocoder.getFromLocation(
+                location.latitude,
+                location.longitude,
+                1
+            )
+
+            if (addresses?.isNotEmpty() == true) {
+                val address = addresses[0]
+
+                onResult(address.getAddressLine(0))
+            }
+        }
+    }
+
+    fun getAutocompleteAddressFromGoogle(address: String, onResult: (address: String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val location = apiClient.getCoordinatesFromGoogle(address = address).getOrNull()
+            Timber.d("location: $location")
+            location?.results?.get(0)?.let { onResult(it.formattedAddress) }
+        }
+    }
+
+    var currentLatLong by mutableStateOf(LatLng(0.0, 0.0))
+        private set
+
 
     var createEntity by mutableStateOf(CreateAnimalEntityDto())
         private set
@@ -87,15 +163,20 @@ class AddAnimalScreenViewModel(application: Application) : BaseViewModel(applica
         createEntity = createEntity.copy(files = files)
     }
 
+    fun sendAnimal(
+        pageType: PageType
+    ) {
+        addAnimal(pageType, createEntity)
+    }
 
     fun addAnimal(
-        addPage: AddPage,
+        pageType: PageType,
         animal: CreateAnimalEntityDto
     ) {
         viewModelScope.launch {
             val requestBody = MultipartBody.Builder().apply {
                 setType(MultipartBody.FORM)
-                addFormDataPart("AnimalName", animal.animalName)
+                animal.animalName?.let { addFormDataPart("AnimalName", it) }
                 addFormDataPart("AnimalType", animal.animalType)
                 addFormDataPart("AddressFull", animal.addressFull)
                 addFormDataPart("AddressCity", animal.addressCity)
@@ -106,9 +187,9 @@ class AddAnimalScreenViewModel(application: Application) : BaseViewModel(applica
                 addFormDataPart("Gender", animal.gender.toString())
                 addFormDataPart("Contacts.name", animal.contacts.name)
                 addFormDataPart("Contacts.phone", animal.contacts.phone)
-                addFormDataPart("Contacts.email", animal.contacts.email)
-                addFormDataPart("Contacts.telegram", animal.contacts.telegram)
-                addFormDataPart("Contacts.vk", animal.contacts.vk)
+                animal.contacts.email?.let { addFormDataPart("Contacts.email", it) }
+                animal.contacts.telegram?.let { addFormDataPart("Contacts.telegram", it) }
+                animal.contacts.vk?.let { addFormDataPart("Contacts.vk", it) }
                 addFormDataPart("Age", animal.age.toString())
                 animal.files.forEach { file ->
                     addFormDataPart(
@@ -120,9 +201,10 @@ class AddAnimalScreenViewModel(application: Application) : BaseViewModel(applica
             }.build()
 
             apiClient.addLostPet(
-                url = addPage.urlPrefix, requestBody = requestBody
+                url = pageType.urlPrefix, requestBody = requestBody
             )
                 .onSuccess {
+
                 }
         }
     }
